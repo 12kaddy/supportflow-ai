@@ -136,7 +136,7 @@ def test_speech_barge_in_cancels_pending_agent(voice_app, monkeypatch):
     cancelled = threading.Event()
     monkeypatch.setattr(runtime, "build_graph", lambda *args, **kwargs: object())
 
-    async def slow(*args):
+    async def slow(*args, **kwargs):
         try:
             await asyncio.sleep(60)
         finally:
@@ -247,7 +247,7 @@ def test_interrupt_during_tts_discards_native_result(voice_app, monkeypatch):
     )
     monkeypatch.setattr(runtime, "build_graph", lambda *args, **kwargs: object())
 
-    async def answer(*args):
+    async def answer(*args, **kwargs):
         return {"messages": [SimpleNamespace(content="First sentence. Second sentence.")]}
 
     monkeypatch.setattr(runtime, "invoke_chat", answer)

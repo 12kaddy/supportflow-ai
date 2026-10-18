@@ -34,6 +34,11 @@ async def lifespan(app: FastAPI):
                 except TimeoutError:
                     task.cancel()
                     await asyncio.gather(task, return_exceptions=True)
+            if get_settings().tracing_enabled:
+                from app.observability.tracing import provider
+
+                provider().force_flush(timeout_millis=5000)
+                provider().shutdown()
 
 
 app = FastAPI(title="SupportFlow AI", lifespan=lifespan)

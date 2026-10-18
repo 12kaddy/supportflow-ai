@@ -11,6 +11,8 @@ from app.agents.graph import SYSTEM_PROMPT
 from app.evaluation.environment import make_fixture_tools
 from app.evaluation.schemas import Benchmark
 from app.evaluation.scoring import SCORER_VERSION, score_response
+from app.guardrails.output import current_tool_facts, verify_answer
+from app.observability.tracing import turn_trace
 from app.services.disputes import evaluate_dispute
 
 DEFAULT_DATASET = Path(__file__).resolve().parents[2] / "data/evaluations/support_v2.json"
@@ -46,14 +48,29 @@ def run_policy_case(scenario):
     }
 
 
-async def run_agent_case(scenario, model, timeout=45):
+async def run_agent_case(scenario, model, timeout=45, guardrails=False):
+    with turn_trace() as trace:
+        result = await _run_agent_case(scenario, model, timeout, guardrails, trace)
+        if trace:
+            trace.root.set_attribute("supportflow.evaluation_scenario", scenario.id)
+            trace.root.set_attribute("supportflow.evaluation_passed", result["passed"])
+            report = result.get("guardrails")
+            if report:
+                trace.root.set_attribute(
+                    "supportflow.claim_violations_before", len(report["before"])
+                )
+                trace.root.set_attribute("supportflow.claim_violations_after", len(report["after"]))
+        return result
+
+
+async def _run_agent_case(scenario, model, timeout, guardrails, trace):
     started = perf_counter()
     try:
         graph = create_react_agent(model, tools=make_fixture_tools(scenario), prompt=SYSTEM_PROMPT)
         result = await asyncio.wait_for(
             graph.ainvoke(
                 {"messages": [{"role": "user", "content": scenario.prompt}]},
-                config={"recursion_limit": 12},
+                config={"recursion_limit": 12, "callbacks": [trace] if trace else []},
             ),
             timeout=timeout,
         )
@@ -70,7 +87,11 @@ async def run_agent_case(scenario, model, timeout=45):
             if isinstance(message, ToolMessage)
             and (message.status == "error" or '"error":' in str(message.content))
         ]
-        answer = str(messages[-1].content)
+        raw_answer = str(messages[-1].content)
+        answer = raw_answer
+        guard_report = None
+        if guardrails:
+            answer, guard_report = verify_answer(raw_answer, current_tool_facts(messages))
         score = score_response(scenario, answer, calls, tool_errors)
         usage = [
             message.usage_metadata
@@ -81,6 +102,9 @@ async def run_agent_case(scenario, model, timeout=45):
             "id": scenario.id,
             **score,
             "answer": answer,
+            "raw_answer": raw_answer,
+            "guardrails": guard_report,
+            "raw_score": score_response(scenario, raw_answer, calls, tool_errors),
             "tool_calls": calls,
             "tool_errors": tool_errors,
             "token_usage": usage,

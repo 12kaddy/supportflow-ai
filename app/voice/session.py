@@ -102,7 +102,7 @@ class VoiceSession:
                 self.email,
                 response_language=LANGUAGES[self.language],
             )
-            result = await invoke_chat(graph, transcript, self.thread)
+            result = await invoke_chat(graph, transcript, self.thread, language=self.language)
             metrics["agent_latency_ms"] = round((perf_counter() - stage) * 1000, 2)
             answer = str(result["messages"][-1].content)
             await self.send("answer", turn_id=turn_id, text=answer)

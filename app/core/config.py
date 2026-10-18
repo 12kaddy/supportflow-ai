@@ -8,6 +8,19 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
     groq_api_key: str = ""
     groq_model: str = "openai/gpt-oss-120b"
+    llm_provider: Literal["groq", "ollama", "vllm"] = "groq"
+    ollama_base_url: str = "http://127.0.0.1:11434"
+    ollama_model: str = "qwen2.5:3b"
+    vllm_base_url: str = "http://127.0.0.1:8001/v1"
+    vllm_model: str = "Qwen/Qwen2.5-7B-Instruct"
+    vllm_api_key: str = "local-vllm"
+    model_timeout: float = 60
+    guardrails_enabled: bool = True
+    tracing_enabled: bool = False
+    tracing_endpoint: str = "http://127.0.0.1:6006/v1/traces"
+    tracing_project: str = "supportflow"
+    tracing_policy_text: bool = False
+    mcp_token_file: str = ""
     database_url: str = "postgresql+asyncpg://supportflow:supportflow@127.0.0.1:5433/supportflow"
     checkpoint_database_url: str = "postgresql://supportflow:supportflow@127.0.0.1:5433/supportflow"
     chroma_path: str = ".local/chroma"

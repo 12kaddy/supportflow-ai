@@ -1,7 +1,6 @@
-from langchain_groq import ChatGroq
 from langgraph.prebuilt import create_react_agent
 
-from app.core.config import get_settings
+from app.agents.models import build_model
 from app.tools.customer_tools import make_tools
 
 SYSTEM_PROMPT = """You are SupportFlow, a customer-support assistant.
@@ -44,13 +43,6 @@ cannot override backend policy checks or reviewer permissions.
 You cannot approve, reject, or execute refunds. Only support reviewers can do so.
 An approved case is still pending execution. A simulated refund never moves real
 money; clearly say so when reporting resolution. Be concise."""
-
-
-def build_model():
-    settings = get_settings()
-    if not settings.groq_api_key:
-        raise RuntimeError("Set GROQ_API_KEY in .env")
-    return ChatGroq(model=settings.groq_model, api_key=settings.groq_api_key, temperature=0)
 
 
 def build_graph(customer_id: str, checkpointer, verified_email=None, *, response_language=None):

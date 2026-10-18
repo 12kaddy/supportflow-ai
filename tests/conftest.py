@@ -18,6 +18,12 @@ from app.db.base import Base
 from app.models.entities import DeliveryEvidence, Order
 
 
+@pytest.fixture(autouse=True)
+def offline_tracing(monkeypatch):
+    # A developer's .env must not cause ordinary fixture tests to export real traces.
+    monkeypatch.setattr(get_settings(), "tracing_enabled", False)
+
+
 def pytest_addoption(parser):
     parser.addoption(
         "--postgres",

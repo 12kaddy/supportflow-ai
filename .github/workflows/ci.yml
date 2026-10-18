@@ -21,6 +21,7 @@ jobs:
       - run: pytest -q
       - run: python -m scripts.evaluate
       - run: python -m scripts.evaluate_retrieval
+      - run: python -m scripts.evaluate_guardrails
       - uses: actions/upload-artifact@v4
         if: always()
         with:

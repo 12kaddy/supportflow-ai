@@ -81,6 +81,11 @@ See [email setup and delivery guarantees](docs/email-notifications.md).
 | Request IDs, telemetry and provider errors | [Operations](docs/operations.md) |
 | Optional external identity provider | [Keycloak/OIDC](docs/authentication.md) |
 | Microphone, Indian-language speech, interruption and WER | [Voice channel](docs/voice.md) |
+| Read-only tools for Inspector and desktop MCP clients | [MCP server](docs/mcp.md) |
+| Local Phoenix traces and a reproducible debugging replay | [Tracing](docs/tracing.md) |
+| Input PII/injection checks and grounded case responses | [Guardrails](docs/guardrails.md) |
+| Groq, Ollama/vLLM configuration and fair benchmarks | [Model backends](docs/model-backends.md) |
+| Recorded model results and measurement limitations | [Model comparison](docs/model-comparison.md) |
 | Architecture and trade-offs | [Decisions](DECISIONS.md) |
 
 Local accounts are the main interface. `AUTH_MODE=oidc` retains the optional

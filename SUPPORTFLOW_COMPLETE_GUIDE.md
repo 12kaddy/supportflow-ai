@@ -25,6 +25,7 @@ placeholders and development defaults, never the contents of the private `.env`.
 17. Troubleshooting
 18. Implemented boundaries and remaining work
 19. Voice channel (new implementation)
+20. MCP, Phoenix, guardrails and local model backends
 
 ## 1. Product purpose and scope
 
@@ -62,7 +63,7 @@ Important terminology:
 | Frontend | Streamlit | Account forms, customer chat, reviewer dashboard |
 | API | FastAPI / Pydantic | HTTP routes, validation, dependency-based access checks |
 | Application | Python 3.11 or 3.12 | Services, policies, integrations, scripts |
-| Model integration | LangChain / ChatGroq | Groq chat-model calls and tool integration |
+| Model integration | LangChain / ChatGroq / ChatOllama / ChatOpenAI | Shared provider factory and tool integration |
 | Default model setting | `openai/gpt-oss-120b` | Hosted inference through Groq |
 | Agent orchestration | LangGraph | Model/tool loop and checkpointed conversation state |
 | Structured storage | PostgreSQL 16 | Accounts, orders, cases, approvals, audit, email outbox |
@@ -870,7 +871,7 @@ GitHub Actions runs lint, formatting, offline tests, policy/retrieval evaluation
 compilation and a separate PostgreSQL 16 concurrency job. Reports are uploaded as
 artifacts. CI does not make live Groq calls by default.
 
-Latest cleanup verification on this checkout: **97 tests passed**, **10/10 policy
+Latest platform verification on this checkout: **135 tests passed**, **10/10 policy
 scenarios passed**, and offline keyword retrieval hit@1, recall@3 and reciprocal
 rank were all 1.0.
 These are recorded regression results on small datasets, not production accuracy
@@ -925,8 +926,8 @@ model responses and fixture tool arguments.
 Groq rate limits map to 429 with a bounded `Retry-After`; provider connection,
 timeout/status failures map to 503. Initialization errors return a generic 503;
 unexpected chat errors return a generic 500 with request-ID guidance. There is
-no automatic provider fallback, centralized tracing backend, alerting system or
-operational metrics dashboard supplied by the repository.
+no automatic provider fallback or alerting system. Optional local Phoenix tracing
+is described in section 20; a separate operational metrics dashboard is not supplied.
 
 ## 17. Troubleshooting
 
@@ -1020,5 +1021,99 @@ Full protocol, limits, language/model setup and measurement definitions are in
 `docs/voice.md`. Indic-Parler access/quality and real microphone performance require
 separate live validation; they are not established by protocol integration tests.
 Initial English/Hindi synthetic measurements, including the cold-start outlier,
-are recorded in `docs/voice-validation.md`. The expanded suite passes 114 tests;
+are recorded in `docs/voice-validation.md`. The voice-stage suite passed 114 tests;
 human-speech WER and subjective microphone quality remain unmeasured.
+
+## 20. MCP, Phoenix, guardrails and local model backends
+
+### Read-only MCP surface
+
+`app/mcp_server.py` uses the official Python MCP SDK to expose `lookup_order`,
+`find_policy` and `lookup_dispute` over stdio. `scripts/mcp_stdio.py` provides an
+absolute-path desktop launcher; `scripts/mcp_login.py` acquires a customer token
+without exposing the password in command history. Configure `MCP_TOKEN_FILE` with
+the ignored local token-file path. Each call rereads/verifies local/OIDC credentials
+and customer role. Demo/reviewer-only identities are rejected, and no caller can
+select another customer via a tool argument. Existing tools enforce ownership.
+No create/review/refund tools, public HTTP endpoint or OAuth server are added.
+The agent itself continues using direct tools; external MCP tool consumption was
+optional and is not implemented. Inspector 2.5.0 and official SDK stdio/in-memory
+clients were used for validation. The SDK is explicitly pinned to maintained 1.x.
+
+### Phoenix tracing
+
+`app/observability/tracing.py` emits OpenInference-compatible turn, model and tool
+spans through the optional OpenTelemetry HTTP exporter. Start the loopback Phoenix
+service with `docker-compose.observability.yml`, install `.[tracing]`, and set
+`TRACING_ENABLED=true`, `TRACING_ENDPOINT=http://127.0.0.1:6006/v1/traces` and
+`TRACING_PROJECT=supportflow`. The same runtime covers chat/voice; evaluations
+can also trace model calls and scenario outcomes.
+
+Spans include duration, reported tokens, retrieval chunk references/version/citation
+metadata and guardrail decisions. `TRACING_POLICY_TEXT=true` optionally includes
+approved policy text. Raw customer prompts, generated answers, tokens and provider
+exception bodies are omitted. HTTP request IDs link logs to traces. Trace storage
+uses a separate Docker volume; deployment-level access and retention remain work.
+
+`python -m scripts.trace_replay` reproduces an injected premature-refund claim:
+the tool reports approval pending execution, while a scripted model claims issuance.
+The trace flags the contradiction and shows a corrected output/checkpoint without
+replaying tools. It is explicitly a scripted regression, not a production discovery.
+Phoenix ingestion was verified through its project API.
+
+### Guardrails
+
+`app/guardrails/input.py` screens common instruction overrides/approval bypass and
+redacts common email, Indian phone, PAN-like, grouped Aadhaar and card-like patterns
+before new user text reaches the model/checkpoint. Pattern checks are incomplete
+and may overblock; names, addresses, unusual formats and old history are not fully
+sanitized. Blocked requests do not invoke the graph.
+
+`app/guardrails/output.py` uses only tool facts from the current turn. It audits
+common forbidden payment/approval/status/amount/currency claims. Case prose is
+deterministically rebuilt from the latest verified case result using templates
+for the five supported UI languages. IDs and state codes remain exact. General
+answers without case facts use heuristic checks and a safe fallback; this is not
+universal semantic verification or a learned moderation classifier.
+
+Rewrites replace the same persisted assistant message ID, with no tool/model retry.
+`GUARDRAILS_ENABLED=true` is the code default. A nine-response adversarial fixture
+measured 6/9 flagged claims before and 0/9 after, with three valid controls. This
+is a small labeled regression metric, not a general safety percentage. Live model
+reports preserve raw/guarded answers and paired scores from the same generation.
+
+### Provider factory and comparison
+
+`app/agents/models.py` selects `LLM_PROVIDER=groq|ollama|vllm` for the existing graph.
+Groq remains the active default. Ollama uses `OLLAMA_BASE_URL`/`OLLAMA_MODEL` and
+native tools via ChatOllama. vLLM uses its OpenAI-compatible `/v1` endpoint via
+ChatOpenAI with `VLLM_BASE_URL`, `VLLM_MODEL` and `VLLM_API_KEY`. Install `.[models]`
+for local adapters. No Groq key or silent cloud fallback is required in local mode.
+Temperature is zero and timeout is configurable through `MODEL_TIMEOUT`.
+
+`scripts.evaluate` accepts provider/model overrides, optional per-scenario pacing
+and selected scenarios. `scripts.compare_models` rejects incompatible dataset,
+prompt, scorer, scenario-set or guardrail provenance and publishes only recorded
+results. Hosted cost remains unknown without explicit pricing; local API fees
+exclude hardware/electricity. Failed calls and missing usage can make token-cost
+estimates incomplete. Fixture tools measure behavior, not live business operations.
+
+The actual Ollama Docker download exhausted C: and was stopped. About 4.8 GiB was
+recovered, Docker was restarted, and PostgreSQL/Keycloak/Mailpit/Phoenix were restored
+without deleting their volumes. Real local-model accuracy is therefore unmeasured.
+Run `python -m scripts.check_local_resources --path C:\\ --required-gib 20` before
+optional image downloads; choose the filesystem actually holding Docker data.
+Both local client adapters have isolated HTTP contract tests for native tool calls
+and token usage; this does not establish real model quality or GPU compatibility.
+
+See `docs/mcp.md`, `docs/tracing.md`, `docs/guardrails.md`, `docs/model-backends.md`
+and `docs/model-comparison.md` for exact setup, measured outcomes and limitations.
+
+Latest verification: 135 Python tests plus browser-code, Ruff, policy, retrieval
+and guardrail regression checks passed. The live-validation Phoenix project contains
+an actual model/policy turn with token usage and retrieved chunks. The matched,
+three-scenario hosted comparison recorded guarded 20B 3/3 at 1.32 s mean versus
+120B 2/3 at 2.01 s. Both had raw completed pass rate 2/3 and output claim flags
+1/3 before versus 0/3 after. This is a small subset, not a general model ranking.
+Reported-token list-price cost equivalents and official pricing sources are
+included in the comparison guide; actual account billing remains unknown.

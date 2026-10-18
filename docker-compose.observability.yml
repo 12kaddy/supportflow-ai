@@ -1,0 +1,11 @@
+services:
+  phoenix:
+    image: arizephoenix/phoenix:latest
+    ports:
+      - "127.0.0.1:6006:6006"
+    environment:
+      PHOENIX_WORKING_DIR: /data
+    volumes:
+      - phoenix_data:/data
+volumes:
+  phoenix_data:
