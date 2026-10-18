@@ -1,0 +1,13 @@
+{
+  "version": "retrieval-v1",
+  "cases": [
+    {"id":"tracking-stalled","query":"tracking has not changed for 48 hours","relevant_sources":["shipping_policy.md"]},
+    {"id":"cancel-before-shipment","query":"cancel before shipment","relevant_sources":["cancellation_policy.md"]},
+    {"id":"refund-confirmation","query":"explicitly confirm refund request","relevant_sources":["refund_policy.md"]},
+    {"id":"proof-conflict","query":"delivery proof conflicts with destination","relevant_sources":["delivery_dispute_policy.md"]},
+    {"id":"missing-proof","query":"inconclusive delivery proof requires investigation","relevant_sources":["delivery_dispute_policy.md"]},
+    {"id":"refund-window","query":"refund seven calendar days delivery","relevant_sources":["refund_policy.md"]},
+    {"id":"delayed-shipment","query":"shipped orders delayed tracking","relevant_sources":["shipping_policy.md"]},
+    {"id":"no-payment-authorization","query":"dispute decision never authorizes payment","relevant_sources":["delivery_dispute_policy.md"]}
+  ]
+}

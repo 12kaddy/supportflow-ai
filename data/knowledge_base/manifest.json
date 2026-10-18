@@ -1,0 +1,6 @@
+{
+  "cancellation_policy.md": "cancellation-v1",
+  "delivery_dispute_policy.md": "delivery-dispute-v1",
+  "refund_policy.md": "refund-v1",
+  "shipping_policy.md": "shipping-v1"
+}

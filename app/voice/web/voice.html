@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SupportFlow Voice</title>
+  <style>
+    body { font: 17px system-ui, sans-serif; background: #f3f6fa; color: #172636; margin: 0; }
+    main { max-width: 760px; margin: 36px auto; padding: 24px; background: white; border-radius: 16px; }
+    h1 { margin-top: 0; } label { display: block; margin: 14px 0; }
+    input, select { display: block; box-sizing: border-box; width: 100%; padding: 10px; margin-top: 5px; }
+    button { padding: 10px 16px; margin: 8px 6px 8px 0; cursor: pointer; }
+    button:disabled { cursor: default; } .hint { color: #526273; font-size: 14px; }
+    #status { padding: 12px; background: #edf5ff; border-radius: 8px; }
+    #conversation { max-height: 400px; overflow: auto; white-space: pre-wrap; }
+    .message { padding: 14px 0; border-bottom: 1px solid #e3e8ee; }
+    pre { white-space: pre-wrap; font-size: 13px; } [hidden] { display: none !important; }
+  </style>
+  <script src="/v1/voice/client.js" defer></script>
+</head>
+<body><main>
+  <h1>SupportFlow Voice</h1>
+  <p>Speak about your order in your preferred language. The same support agent handles your case.</p>
+  <p class="hint">Use headphones to avoid speaker echo. Speech models run on the server;
+    transcripts go to the configured AI provider. Audio is not saved by this channel.
+    Refunds remain reviewed simulations. Microphone access requires localhost or HTTPS.</p>
+  <p id="status" role="status" aria-live="polite">Checking voice configuration…</p>
+  <section id="credentials">
+    <div id="local-fields" hidden>
+      <label>Email<input id="email" type="email" autocomplete="username"></label>
+      <label>Password<input id="password" type="password" autocomplete="current-password"></label>
+    </div>
+    <div id="token-fields" hidden>
+      <label>Customer access token<input id="token" type="password" autocomplete="off"></label>
+    </div>
+    <div id="demo-fields" hidden>
+      <label>Demo API key<input id="api-key" type="password" autocomplete="off"></label>
+      <label>Customer ID<input id="customer" value="demo-customer"></label>
+    </div>
+    <label>Language<select id="language"></select></label>
+    <label>Conversation ID<input id="thread" maxlength="100"></label>
+    <p class="hint">Keep this ID to resume a conversation. Avoid simultaneous text and voice requests on the same conversation.</p>
+  </section>
+  <button id="connect" disabled>Connect microphone</button>
+  <button id="interrupt" disabled>Interrupt response</button>
+  <button id="disconnect" disabled>Disconnect</button>
+  <button id="export" disabled>Download measurements</button>
+  <section id="conversation" aria-live="polite" aria-label="Conversation"></section>
+  <details><summary>Latest turn measurements</summary><pre id="metrics">No completed turns.</pre></details>
+</main></body></html>

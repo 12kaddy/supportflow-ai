@@ -1,0 +1,24 @@
+{
+  "realm": "supportflow",
+  "enabled": true,
+  "registrationAllowed": false,
+  "resetPasswordAllowed": false,
+  "accessTokenLifespan": 300,
+  "roles": {"realm": [{"name": "customer"}, {"name": "reviewer"}]},
+  "clients": [{
+    "clientId": "supportflow-ui",
+    "publicClient": true,
+    "standardFlowEnabled": true,
+    "directAccessGrantsEnabled": false,
+    "redirectUris": ["http://localhost:8501/*"],
+    "webOrigins": ["http://localhost:8501"],
+    "attributes": {"pkce.code.challenge.method": "S256", "oauth2.device.authorization.grant.enabled": "true"},
+    "protocol": "openid-connect",
+    "protocolMappers": [{
+      "name": "supportflow-api-audience",
+      "protocol": "openid-connect",
+      "protocolMapper": "oidc-audience-mapper",
+      "config": {"included.custom.audience": "supportflow-api", "access.token.claim": "true", "id.token.claim": "false"}
+    }]
+  }]
+}

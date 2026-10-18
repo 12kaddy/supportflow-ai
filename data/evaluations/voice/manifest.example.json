@@ -1,0 +1,11 @@
+{
+  "version": "voice-wer-v1",
+  "cases": [
+    {"id":"en-1","language":"en","audio":"en-1.wav","reference":"What is the shipping policy"},
+    {"id":"en-2","language":"en","audio":"en-2.wav","reference":"My order has not arrived yet"},
+    {"id":"en-3","language":"en","audio":"en-3.wav","reference":"How can I check my case status"},
+    {"id":"hi-1","language":"hi","audio":"hi-1.wav","reference":"मेरा ऑर्डर अभी तक नहीं आया है"},
+    {"id":"hi-2","language":"hi","audio":"hi-2.wav","reference":"मुझे अपने मामले की स्थिति जाननी है"},
+    {"id":"hi-3","language":"hi","audio":"hi-3.wav","reference":"पैसे वापस पाने की नीति क्या है"}
+  ]
+}

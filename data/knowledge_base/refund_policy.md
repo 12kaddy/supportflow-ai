@@ -1,0 +1,2 @@
+# Refund Policy (fictional demonstration policy)
+Delivered orders are eligible for a refund request within seven calendar days of delivery. Refunds are not automatically issued: the system records a request for manual review. Shipped or undelivered orders are not eligible for the delivered-order refund workflow. Customers must explicitly confirm a refund request. All rules in this demo are fictional.
