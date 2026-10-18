@@ -16,7 +16,8 @@ locks, and unique constraints protect those operations.
 
 ## Local setup
 
-Requires Python 3.11 or 3.12, Docker Compose, and a Groq API key for chat.
+Requires Python 3.11 or 3.12 and Docker Compose. The default chat backend uses a
+Groq API key; optional Ollama/vLLM backends are described in the model guide below.
 Run commands from the project root.
 
 ```powershell
@@ -74,6 +75,7 @@ See [email setup and delivery guarantees](docs/email-notifications.md).
 
 | Topic | Guide |
 | --- | --- |
+| Complete architecture, workflows and setup in one file | [Complete project guide](SUPPORTFLOW_COMPLETE_GUIDE.md) |
 | Registration, login, admin setup, email verification | [Local accounts](docs/local-accounts.md) |
 | Case decisions, execution, audit and historical suggestions | [Resolution workflow](docs/workflows.md) |
 | Hybrid search, policy versions and citations | [Policy retrieval](docs/retrieval.md) |
